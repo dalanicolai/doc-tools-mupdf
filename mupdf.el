@@ -31,17 +31,33 @@
                 (make-list (length (directory-files outdir))
                            (cons (car size-list) (cadr size-list))))))
 
-    ("pdf" (let* ((lines (process-lines "mutool" "info" "-M"
-                                        file))
-                  (split-lines (mapcar (lambda (l)
-                                             (split-string l " " t))
-                                           lines))
-                  (pages (or (string-to-number (cadr (nth 5 split-lines)))
-                             (user-error "Output does not have 11 lines;
-the function `mupdf-page-sizes' should get modified/generalized")))
-                  (box-line (nth 9 split-lines)))
-             (make-list pages (cons (string-to-number (nth 5 box-line))
-                                    (string-to-number (nth 6 box-line))))))))
+    ("pdf" (let* ((lines (process-lines "mutool"
+                                        "pages"
+                                        buffer-file-name))
+                  sizes)
+             (dolist (l lines)
+               (when (string-match-p "^<MediaBox" l)
+                 (let ((size (mapcar (lambda (c)
+                                       (string-to-number
+                                        (string-replace "\"" ""
+                                                        (nth 1 (split-string c "=")))))
+                                     (seq-subseq (split-string l) 3 5))))
+                   (push (cons (nth 0 size) (nth 1 size))
+                         sizes))))
+             sizes))))
+
+
+;;      (let* ((lines (process-lines "mutool" "info" "-M"
+;;                                         file))
+;;                   (split-lines (mapcar (lambda (l)
+;;                                              (split-string l " " t))
+;;                                            lines))
+;;                   (pages (or (string-to-number (cadr (nth 5 split-lines)))
+;;                              (user-error "Output does not have 11 lines;
+;; the function `mupdf-page-sizes' should get modified/generalized")))
+;;                   (box-line (nth 9 split-lines)))
+;;              (make-list pages (cons (string-to-number (nth 5 box-line))
+;;                                     (string-to-number (nth 6 box-line))))))))
 
 (defun mupdf-get-image-data (page width &optional file)
   (setq file (or file (buffer-file-name)))
