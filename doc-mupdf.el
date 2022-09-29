@@ -18,7 +18,7 @@
   (setq file (or file buffer-file-name))
   (pcase (file-name-extension file)
 
-    ("epub" (let ((outdir (concat "/tmp/"
+    ("epub" (let ((outdir (concat "/tmp/doc-tools/"
                                   (file-name-as-directory (file-name-base file))
                                   "thumbs/")))
               (unless (file-exists-p outdir)
@@ -75,7 +75,7 @@
 
 (defun doc-mupdf-create-pages (width &optional file force)
   (setq file (or file (buffer-file-name)))
-  (let ((outdir (concat "/tmp/" (file-name-as-directory (file-name-base file)) "pages/")))
+  (let ((outdir (concat "/tmp/doc-tools/" (file-name-as-directory (file-name-base file)) "pages/")))
     (when (or (not (file-exists-p outdir)) force)
       (unless (file-exists-p outdir)
         (make-directory outdir t))
@@ -89,7 +89,7 @@
 
 (defun doc-mupdf-create-thumbs (&optional file force)
   (setq file (or file (buffer-file-name)))
-  (let ((outdir (concat "/tmp/"
+  (let ((outdir (concat "/tmp/doc-tools/"
                         (file-name-as-directory (file-name-base file))
                         "thumbs/")))
     (when (or (not (file-exists-p outdir)) force)
