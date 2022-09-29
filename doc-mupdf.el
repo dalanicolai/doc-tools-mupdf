@@ -120,9 +120,9 @@
   (setq file (or file (buffer-file-name)))
   (let (text)
     (with-temp-buffer
-      (funcall #'call-process "mutool" nil t nil
+      (apply #'call-process "mutool" nil t nil
                "draw" "-F" "stext" file
-               (when pages (mapconcat #'number-to-string pages ",")))
+               (when pages (list (mapconcat #'number-to-string pages ","))))
       (setq text (libxml-parse-xml-region)))
     text))
     ;; (when detail ;i.e. page or more detail
