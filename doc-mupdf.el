@@ -5,11 +5,13 @@
 (defun doc-mupdf-info (function &optional arg)
   (interactive (if (member (file-name-extension (buffer-file-name))
                            '("pdf" "epub"))
-                   (list (completing-read "Select info type: "
-                                          doc-mupdf-info-commands)
+                   (list (intern-soft (completing-read "Select info type: "
+                                                       doc-mupdf-info-commands))
                          current-prefix-arg)
                  (user-error "Buffer file not of `pdf' or `epub' type")))
-  (pp (funcall (intern-soft function))
+  (pp (pcase function
+        ('doc-mupdf-structured-contents (call-interactively #'doc-mupdf-structured-contents))
+        (var (funcall var)))
       (when arg
         (get-buffer-create "*doc-mupdf-info*")))
   (when arg (pop-to-buffer "*doc-mupdf-info*")))
@@ -74,7 +76,7 @@
     (buffer-substring-no-properties (point-min) (point-max))))
 
 (defun doc-mupdf-create-pages (width &optional file force)
-  (setq file (or file (buffer-file-name)))
+  (setq file (or file buffer-file-name))
   (let ((outdir (concat "/tmp/doc-tools/" (file-name-as-directory (file-name-base file)) "pages/")))
     (when (or (not (file-exists-p outdir)) force)
       (unless (file-exists-p outdir)
@@ -88,7 +90,7 @@
                                      (message "Create pages process %s" event)))))))
 
 (defun doc-mupdf-create-thumbs (&optional file force)
-  (setq file (or file (buffer-file-name)))
+  (setq file (or file buffer-file-name))
   (let ((outdir (concat "/tmp/doc-tools/"
                         (file-name-as-directory (file-name-base file))
                         "thumbs/")))
@@ -115,16 +117,19 @@
                                      (nthcdr 2 e)))
                         (nthcdr 2 line-contents)))))
 
-(defun doc-mupdf-structured-contents (&optional detail file &rest pages)
-  (interactive)
-  (setq file (or file (buffer-file-name)))
+(defun doc-mupdf-structured-contents (&optional page detail file)
+  (interactive "nEnter page number: ")
+  (setq file (or file buffer-file-name))
   (let (text)
     (with-temp-buffer
       (apply #'call-process "mutool" nil t nil
                "draw" "-F" "stext" file
-               (when pages (list (mapconcat #'number-to-string pages ","))))
-      (setq text (libxml-parse-xml-region)))
-    text))
+               (when page (list (number-to-string page))))
+               ;; (when pages (list (mapconcat #'number-to-string pages ","))))
+      (goto-char (point-min))
+      (flush-lines "^warning")
+      (setq text (libxml-parse-xml-region)))))
+    ;; text))
     ;; (when detail ;i.e. page or more detail
     ;;   (setq text (nthcdr 2 text)))
     ;; (when (memq detail '(block line char))
